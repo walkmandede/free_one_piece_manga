@@ -12,7 +12,7 @@ import 'package:get/get.dart';
 import 'package:chaleno/chaleno.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class HomePageController extends GetxController{
+class MangaListController extends GetxController{
 
   bool xLoading = false;
   List<String> allData = [];

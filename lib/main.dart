@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_super_scaffold/flutter_super_scaffold.dart';
+import 'package:free_one_piece_manga/modules/home_main/v_home_page.dart';
 import 'package:free_one_piece_manga/utils/app_colors.dart';
 import 'package:free_one_piece_manga/utils/localization/language.dart';
 import 'package:get/get.dart';
 import 'modules/common/c_data_controller.dart';
-import 'modules/home_main/v_home_page.dart';
+import 'modules/manga/v_manga_list_page.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
