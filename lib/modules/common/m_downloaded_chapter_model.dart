@@ -1,10 +1,6 @@
-
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
-import 'package:flutter_super_scaffold/flutter_super_scaffold.dart';
 import 'package:free_one_piece_manga/utils/app_functions.dart';
 
-class ChapterModel{
-
+class ChapterModel {
   String link;
   List<String> pages;
 
@@ -13,42 +9,50 @@ class ChapterModel{
     required this.pages,
   });
 
-  factory ChapterModel.fromMap({required Map<String,dynamic> data}){
+  factory ChapterModel.fromMap({required Map<String, dynamic> data}) {
     Iterable rawPages = data['pages'];
     return ChapterModel(
         link: data['link'].toString(),
-        pages: rawPages.map((e) => e.toString()).toList()
-    );
+        pages: rawPages.map((e) => e.toString()).toList());
   }
 
-  Map<String,dynamic> toMap(){
-    return {
-      'link' : link.toString(),
-      'pages' : pages
-    };
+  Map<String, dynamic> toMap() {
+    return {'link': link.toString(), 'pages': pages};
   }
 
-  Future<bool> cacheMe({
-    required Function(double) onSuccessEach
-  }) async{
+  Future<bool> cacheMe({required Function(double) onSuccessEach}) async {
     bool xSuccess = false;
     int i = 0;
-    try{
-      for(var each in pages){
+    try {
+      for (var each in pages) {
         final result = await AppFunctions().preCacheImage(each);
-        if(!result){
+        if (!result) {
           throw Exception();
-        }
-        else{
-          i = i+1;
-          onSuccessEach(i/pages.length);
+        } else {
+          i = i + 1;
+          onSuccessEach(i / pages.length);
         }
       }
       xSuccess = true;
-    }catch(e){
+    } catch (e) {
       xSuccess = false;
     }
     return xSuccess;
   }
 
+  bool xLast({required List<String> links}) {
+    try {
+      return getIndex(links: links) == 0;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  int? getIndex({required List<String> links}) {
+    try {
+      return links.indexOf(link);
+    } catch (e) {
+      return null;
+    }
+  }
 }
