@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_super_scaffold/flutter_super_scaffold.dart';
 import 'package:free_one_piece_manga/modules/common/common_widgets.dart';
 import 'package:free_one_piece_manga/modules/common/m_downloaded_chapter_model.dart';
+import 'package:free_one_piece_manga/modules/manga/c_manga_list_controller.dart';
 import 'package:free_one_piece_manga/modules/manga/c_read_manga_controller.dart';
 import 'package:free_one_piece_manga/services/vibrate_service.dart';
 import 'package:free_one_piece_manga/utils/app_colors.dart';
@@ -17,13 +18,11 @@ class ReadMangaPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Get.put(ReadMangaController());
     ReadMangaController controller = Get.find();
+
     controller.setAsRecentRead(link: chapterModel.link);
     return FlutterSuperScaffold(
       topColor: AppColors.black,
-      // statusBarBrightness: Brightness.dark,
-      // statusIconBrightness: Brightness.light,
       isTopSafe: true,
       botColor: AppColors.black,
       // appBar: AppBar(
@@ -79,7 +78,7 @@ class ReadMangaPage extends StatelessWidget {
                   style: const TextStyle(color: AppColors.white, fontSize: 20),
                   children: [
                     TextSpan(
-                        text: title.split('-').last,
+                        text: title.split('-').toList()[1],
                         style: const TextStyle(fontWeight: FontWeight.bold))
                   ],
                 ),
@@ -131,7 +130,6 @@ class ReadMangaPage extends StatelessWidget {
       //   xFirstPage = true;
       // } else
       // } else
-      print(controller.pageController.page);
       currentPage = (controller.pageController.page?.ceil() ?? 0) + 1;
 
       xFirstPage = controller.pageController.page == 0;
@@ -143,7 +141,9 @@ class ReadMangaPage extends StatelessWidget {
     } catch (e) {
       null;
     }
-
+    MangaListController mangaListController = Get.find();
+    int? nextChapIndex =
+        chapterModel.getIndex(links: mangaListController.allData);
     return Container(
       color: AppColors.black,
       padding: EdgeInsets.all(AppConstants.basePadding),
@@ -172,7 +172,7 @@ class ReadMangaPage extends StatelessWidget {
                 child: Row(
                   children: [
                     const Icon(
-                      Icons.first_page,
+                      Icons.keyboard_arrow_left,
                       color: AppColors.black,
                     ),
                     5.widthBox(),
@@ -228,16 +228,26 @@ class ReadMangaPage extends StatelessWidget {
             ),
           ),
           Visibility(
-            visible: !xLastPage,
-            replacement: 70.widthBox(),
+            visible: (nextChapIndex != null ||
+                !chapterModel.xLast(links: mangaListController.allData)),
             child: InkWell(
-              onTap: () {
-                vibrateNow();
-                controller.pageController
-                    .nextPage(
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.linear)
-                    .then((value) => controller.update());
+              onTap: () async {
+                if (xLastPage) {
+                  Get.back();
+                  // if (nextChapIndex != null) {
+
+                  controller.pageController.jumpToPage(0);
+                  mangaListController.onClickEachLink(
+                      link: mangaListController.allData[nextChapIndex! - 1]);
+                  // }
+                } else {
+                  vibrateNow();
+                  controller.pageController
+                      .nextPage(
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.linear)
+                      .then((value) => controller.update());
+                }
               },
               child: Container(
                 padding:
@@ -248,16 +258,16 @@ class ReadMangaPage extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Text(
-                      'Next',
-                      style: TextStyle(
+                    Text(
+                      xLastPage ? 'Next Chap' : 'Next',
+                      style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                           color: AppColors.black),
                     ),
                     5.widthBox(),
-                    const Icon(
-                      Icons.last_page,
+                    Icon(
+                      xLastPage ? Icons.last_page : Icons.keyboard_arrow_right,
                       color: AppColors.black,
                     ),
                   ],
@@ -265,38 +275,6 @@ class ReadMangaPage extends StatelessWidget {
               ),
             ),
           ),
-          // TextButton(
-          //     onPressed: () {
-          //       vibrateNow();
-          //       controller.pageController
-          //           .previousPage(
-          //               duration: const Duration(milliseconds: 250),
-          //               curve: Curves.linear)
-          //           .then((value) => controller.update());
-          //     },
-          //     child: Text(
-          //       'Prev Page',
-          //       style: TextStyle(
-          //           fontWeight: FontWeight.bold,
-          //           fontSize: 15,
-          //           color: xFirstPage ? AppColors.grey : AppColors.primary),
-          //     )),
-          // TextButton(
-          //     onPressed: () {
-          //       vibrateNow();
-          //       controller.pageController
-          //           .nextPage(
-          //               duration: const Duration(milliseconds: 250),
-          //               curve: Curves.linear)
-          //           .then((value) => controller.update());
-          //     },
-          //     child: Text(
-          //       'Next Page',
-          //       style: TextStyle(
-          //           fontWeight: FontWeight.bold,
-          //           fontSize: 15,
-          //           color: xLastPage ? AppColors.grey : AppColors.primary),
-          //     )),
         ],
       ),
     );
@@ -318,7 +296,7 @@ class ReadMangaPage extends StatelessWidget {
               style: const TextStyle(color: AppColors.black, fontSize: 20),
               children: [
                 TextSpan(
-                    text: title.split('-').last,
+                    text: title.split('-').toList()[1],
                     style: const TextStyle(fontWeight: FontWeight.bold))
               ],
             ),
@@ -331,12 +309,13 @@ class ReadMangaPage extends StatelessWidget {
                 color: AppColors.black,
                 borderRadius: BorderRadius.circular(15)),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 InkWell(
                   onTap: () {
                     vibrateNow();
                     controller.pageController
-                        .animateTo(3,
+                        .animateToPage(currentPageNumber.value - 1,
                             duration: const Duration(milliseconds: 250),
                             curve: Curves.linear)
                         .then((value) => controller.update());
@@ -353,14 +332,35 @@ class ReadMangaPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                DropdownButton(
+                20.widthBox(),
+                Obx(() => DropdownButton<int>(
+                    dropdownColor: AppColors.black,
+                    menuMaxHeight: 300,
+                    style: const TextStyle(color: AppColors.white),
+                    value: currentPageNumber.value,
+                    alignment: Alignment.center,
                     items: List.generate(
                         chapterModel.pages.length,
                         (index) => DropdownMenuItem(
-                            value: (index + 1), child: Text('${index + 1}'))),
-                    onChanged: (index) {
-                      print(index);
-                    })
+                            value: (index + 1),
+                            child: Text(
+                              '${index + 1}',
+                              // style: TextStyle(color: AppColors.white),
+                            ))),
+                    onChanged: (value) {
+                      currentPageNumber.value = value as int;
+                      vibrateNow();
+                      Get.back();
+                      controller.pageController
+                          .animateToPage(currentPageNumber.value - 1,
+                              duration: const Duration(milliseconds: 250),
+                              curve: Curves.linear)
+                          .then((value) => controller.update());
+                    })),
+                10.widthBox(),
+                Text('of ${chapterModel.pages.length}',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w500, color: AppColors.textGrey))
               ],
             ),
           )

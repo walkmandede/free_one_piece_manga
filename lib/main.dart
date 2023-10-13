@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_super_scaffold/flutter_super_scaffold.dart';
 import 'package:free_one_piece_manga/modules/home_main/v_home_page.dart';
+<<<<<<< HEAD
 import 'package:free_one_piece_manga/modules/others/v_fuel_price.dart';
+=======
+import 'package:free_one_piece_manga/modules/manga/c_read_manga_controller.dart';
+>>>>>>> refs/remotes/origin/main
 import 'package:free_one_piece_manga/utils/app_colors.dart';
 import 'package:free_one_piece_manga/utils/localization/language.dart';
 import 'package:get/get.dart';
 import 'modules/common/c_data_controller.dart';
 import 'modules/manga/v_manga_list_page.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   Get.put(DataController());
+  Get.put(ReadMangaController());
+
   await Future.delayed(const Duration(seconds: 1));
   runApp(const MyApp());
 }
