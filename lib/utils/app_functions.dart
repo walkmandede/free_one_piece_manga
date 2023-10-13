@@ -9,6 +9,7 @@ class AppFunctions {
     String result = link;
     try{
       result = 'Chapter ${link.split('chapter').last.replaceAll('/', '').replaceAll('-', '-')}';
+      result = result.split('-')[1];
     }
     catch(e){
       null;

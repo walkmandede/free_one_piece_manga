@@ -1,10 +1,8 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:free_one_piece_manga/modules/common/c_data_controller.dart';
 import 'package:free_one_piece_manga/modules/common/common_widgets.dart';
-import 'package:free_one_piece_manga/modules/common/m_downloaded_chapter_model.dart';
 import 'package:free_one_piece_manga/modules/manga/c_manga_list_controller.dart';
-import 'package:free_one_piece_manga/modules/manga/v_read_manga_page.dart';
 import 'package:free_one_piece_manga/services/vibrate_service.dart';
 import 'package:free_one_piece_manga/utils/app_colors.dart';
 import 'package:free_one_piece_manga/utils/app_constants.dart';
@@ -12,102 +10,117 @@ import 'package:free_one_piece_manga/utils/app_functions.dart';
 import 'package:free_one_piece_manga/utils/extensions.dart';
 import 'package:get/get.dart';
 import 'package:flutter_super_scaffold/flutter_super_scaffold.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'dart:io';
 
 class MangaListPage extends StatefulWidget {
-  const MangaListPage({super.key});
+  final bool xDownload;
+  const MangaListPage({super.key,required this.xDownload});
 
   @override
   State<MangaListPage> createState() => _MangaListPageState();
 }
 
 class _MangaListPageState extends State<MangaListPage> {
+  DataController dataController = Get.find();
+
+  @override
+  void initState() {
+    // initLoad();
+    super.initState();
+  }
+
+  Future<void> initLoad() async{
+
+    setState(() {
+
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     Get.put(MangaListController());
-    return FlutterSuperScaffold(
-      isTopSafe: false,
-      isBotSafe: true,
-      appBar: AppBar(
-        backgroundColor: AppColors.black,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(20)
-          )
-        ),
-        title: const Text('One Piece Manga Free',style: TextStyle(color: AppColors.white,fontWeight: FontWeight.w600),),
-        actions: [
-          if(kDebugMode)IconButton(onPressed: () async{
-            SharedPreferences sp = await SharedPreferences.getInstance();
-            await sp.clear();
-          }, icon: const Icon(Icons.settings))
-        ],
-      ),
-      body: SizedBox.expand(
-        child: GetBuilder<MangaListController>(
-          builder: (controller) {
-            if(controller.xLoading){
-              return CommonWidgets.loadingWidget();
-            }
-            else{
 
-              return Column(
-                children: [
-                  lastReadPanel(),
-                  Expanded(child: dataPanel())
-                ],
-              );
-            }
-          },
-        )
-      ),
-    );
-  }
-
-  Widget lastReadPanel(){
-    MangaListController controller = Get.find();
+    MangaListController mangaListController = Get.find();
+    mangaListController.updateDownloadSize();
+    // mangaListController.initLoad();
     return GetBuilder<DataController>(
       builder: (dataController) {
-        String recentLink = '';
-
+        String lastReadChapter = '-';
         try{
-          recentLink = AppFunctions.convertLinkToTitle(link: dataController.recentChapterReadLink);
+          lastReadChapter = AppFunctions.convertLinkToTitle(link: dataController.recentChapterReadLink);
         }
         catch(e){
           null;
         }
-
-
-        if(recentLink.isEmpty){
-          return Container();
-        }
-        else{
-          return GestureDetector(
-            onTap: () {
-              vibrateNow();
-              controller.onClickEachLink(link: recentLink);
-            },
-            child: Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(
-                  AppConstants.basePadding
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.4)
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                'Recent Chapter : $recentLink',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.black
+        return GetBuilder<MangaListController>(
+          builder: (controller) {
+            return Scaffold(
+              appBar: AppBar(
+                backgroundColor: AppColors.black,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(10)
+                  )
+                ),
+                title: GestureDetector(
+                  onTap: () {
+                    vibrateNow();
+                    controller.onClickLastReadChapter();
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      color: Colors.transparent
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(widget.xDownload?'Total Download Size':'Last Read Chapter',style: TextStyle(color: AppColors.white,fontSize: 20,fontWeight: FontWeight.w500),),
+                        10.widthBox(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 25,vertical: 7
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(20)
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            widget.xDownload?'${controller.totalCachedSize} MB':lastReadChapter,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            ),
-          );
-        }
-      },
+              body: SizedBox.expand(
+                child: GetBuilder<MangaListController>(
+                  builder: (controller) {
+                    if(controller.xLoading){
+                      return CommonWidgets.loadingWidget();
+                    }
+                    else{
+                      return Column(
+                        children: [
+                          Expanded(child: dataPanel())
+                        ],
+                      );
+                    }
+                  },
+                )
+              ),
+            );
+          }
+        );
+      }
     );
   }
 
@@ -121,51 +134,112 @@ class _MangaListPageState extends State<MangaListPage> {
       );
     }
     else{
-      return GetBuilder<DataController>(
-        builder: (dataController) {
-          return Scrollbar(
-            child: ListView.builder(
-              padding: EdgeInsets.all(AppConstants.basePadding),
-              itemCount: controller.allData.length,
-              itemBuilder: (context, index) {
-                String link = controller.allData[index]??'';
-                bool xDownloaded = dataController.xChapterIsDownloaded(link: link);
-                return GestureDetector(
-                  onTap: () {
-                    controller.onClickEachLink(link: link);
-                  },
-                  child: Container(
-                      width: double.infinity,
-                      height: AppConstants.buttonSize,
-                      alignment: Alignment.centerLeft,
-                      padding: const EdgeInsets.symmetric(horizontal: 0,vertical: 10),
-                      decoration: BoxDecoration(
-                          color: Colors.transparent,
-                          border: Border(
-                              bottom: BorderSide(
-                                  color: AppColors.grey.withOpacity(0.2)
-                              )
-                          )
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(AppFunctions.convertLinkToTitle(link: link)),
-                          ),
-                          10.widthBox(),
-                          if(!xDownloaded)IconButton(onPressed: () {
-                            controller.onClickDownload(link: link);
-                          }, icon: const Icon(Icons.download_rounded)),
-                        ],
-                      )
-                  ),
-                );
-              },
-            ),
-          );
-        },
-      );
+      List<String> data = [];
 
+      if(widget.xDownload){
+        data.addAll(
+            controller.allData.where((element) => dataController.xChapterIsDownloaded(link: element))
+        );
+      }
+      else{
+        data.addAll(
+            controller.allData
+        );
+      }
+
+      if(data.isEmpty){
+        return const Center(
+          child: Text('No Data Yet'),
+        );
+      }
+
+     return ScrollablePositionedList.builder(
+       itemScrollController: widget.xDownload?null:controller.itemScrollController,
+       padding: EdgeInsets.only(
+         bottom: Get.height * 0.2
+       ),
+       itemCount: data.length,
+       itemBuilder: (context, index) {
+         String link = data[index]??'';
+         bool xDownloaded = dataController.xChapterIsDownloaded(link: link);
+         bool xLastRead = dataController.recentChapterReadLink == link;
+         return GestureDetector(
+           onTap: () {
+             controller.onClickEachLink(link: link);
+           },
+           child: Stack(
+             children: [
+               Container(
+                   width: double.infinity,
+                   alignment: Alignment.centerLeft,
+                   padding: EdgeInsets.symmetric(
+                       horizontal: AppConstants.basePadding,
+                       vertical: 12,
+                   ),
+                   decoration: BoxDecoration(
+                       color: xLastRead?AppColors.primary.withOpacity(0.4):Colors.transparent,
+                       border: Border(
+                           bottom: BorderSide(
+                             color: AppColors.textGrey.withOpacity(0.5),
+                           )
+                       )
+                   ),
+                   child: Row(
+                     children: [
+                       Expanded(
+                         child: Text(
+                           'Chapter : ${AppFunctions.convertLinkToTitle(link: link)}',
+                           style: const TextStyle(
+                             fontWeight: FontWeight.w600,
+                             fontSize: 18
+                           ),
+                         ),
+                       ),
+                       4.widthBox(),
+                       Opacity(
+                         opacity: xDownloaded?0:1,
+                         child: GestureDetector(
+                           onTap: () {
+                             if(!xDownloaded){
+                               controller.onClickDownload(link: link);
+                             }
+                           },
+                           child: Container(
+                             padding: const EdgeInsets.all(6),
+                             decoration: BoxDecoration(
+                               shape: BoxShape.circle,
+                               color: AppColors.primary,
+                               border: Border.all(
+                                 color: AppColors.black
+                               ),
+                             ),
+                             child: Column(
+                               children: [
+                                 const Icon(Icons.arrow_downward,size: 15,),
+                                 Container(
+                                   width: 10,
+                                   height: 1,
+                                   decoration: const BoxDecoration(
+                                     color: AppColors.black
+                                   ),
+                                 )
+                               ],
+                             ),
+                           ),
+                         ),
+                       ),
+                     ],
+                   )
+               ),
+               if(xLastRead)const Icon(
+                 Icons.bookmark_rounded,
+                 size: 15,
+               )
+             ],
+           ),
+         );
+       },
+     );
     }
   }
 

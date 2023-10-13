@@ -19,73 +19,57 @@ class ReadMangaPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     ReadMangaController controller = Get.find();
-
     controller.setAsRecentRead(link: chapterModel.link);
-    return FlutterSuperScaffold(
-      topColor: AppColors.black,
-      isTopSafe: true,
-      botColor: AppColors.black,
-      // appBar: AppBar(
-      //   title: Text(AppFunctions.convertLinkToTitle(link: chapterModel.link)),
-      // ),
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: AppColors.black,
+        shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(
+                bottom: Radius.circular(10)
+            )
+        ),
+        leading: GestureDetector(
+          onTap: () {
+            vibrateNow();
+            Get.back();
+          },
+          child: Container(
+            margin: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(8),
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+              color: AppColors.primary,
+              shape: BoxShape.circle,
+            ),
+            child: const FittedBox(child: Icon(Icons.arrow_back_rounded)),
+          ),
+        ),
+        centerTitle: true,
+        title: Text(
+         'Chapter ${AppFunctions.convertLinkToTitle(link: chapterModel.link)}',
+          style: const TextStyle(
+            fontSize: 20,
+            color: AppColors.white,
+            fontWeight: FontWeight.w600
+          ),
+        ),
+      ),
       body: GetBuilder<ReadMangaController>(
         builder: (controller) {
+
+          if(chapterModel.pages.isEmpty){
+            return const Center(
+              child: Text('No data yet!'),
+            );
+          }
+
           return Column(
             children: [
-              titleWidget(),
               Expanded(child: pagesPanel()),
               controlPanel(),
             ],
           );
         },
-      ),
-    );
-  }
-
-  Widget titleWidget() {
-    String title = AppFunctions.convertLinkToTitle(link: chapterModel.link);
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(
-          horizontal: AppConstants.basePadding, vertical: 15),
-      decoration: const BoxDecoration(
-          color: AppColors.black,
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(10))),
-      child: Stack(
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: GestureDetector(
-              onTap: () {
-                Get.back();
-              },
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.arrow_back),
-              ),
-            ),
-          ),
-          Positioned.fill(
-            child: Align(
-              alignment: AlignmentDirectional.center,
-              child: RichText(
-                text: TextSpan(
-                  text: title.split('-').first,
-                  style: const TextStyle(color: AppColors.white, fontSize: 20),
-                  children: [
-                    TextSpan(
-                        text: title.split('-').toList()[1],
-                        style: const TextStyle(fontWeight: FontWeight.bold))
-                  ],
-                ),
-              ),
-            ),
-          )
-        ],
       ),
     );
   }
@@ -126,10 +110,6 @@ class ReadMangaPage extends StatelessWidget {
     bool xLastPage = false;
     int currentPage = 1;
     try {
-      // if (controller.pageController.page == 0) {
-      //   xFirstPage = true;
-      // } else
-      // } else
       currentPage = (controller.pageController.page?.ceil() ?? 0) + 1;
 
       xFirstPage = controller.pageController.page == 0;
@@ -146,7 +126,12 @@ class ReadMangaPage extends StatelessWidget {
         chapterModel.getIndex(links: mangaListController.allData);
     return Container(
       color: AppColors.black,
-      padding: EdgeInsets.all(AppConstants.basePadding),
+      padding: EdgeInsets.only(
+        left: AppConstants.basePadding,
+        right: AppConstants.basePadding,
+        top: AppConstants.basePadding,
+        bottom: Get.mediaQuery.viewPadding.bottom
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -191,7 +176,8 @@ class ReadMangaPage extends StatelessWidget {
           InkWell(
             onTap: () {
               Get.dialog(
-                  dialogWidget(controller.pageController.page!.ceil() + 1));
+                  dialogWidget(controller.pageController.page!.ceil() + 1)
+              );
             },
             borderRadius: BorderRadius.circular(30),
             child: Column(
@@ -292,12 +278,13 @@ class ReadMangaPage extends StatelessWidget {
         children: [
           RichText(
             text: TextSpan(
-              text: title.split('-').first,
+              text: 'Chapter : ',
               style: const TextStyle(color: AppColors.black, fontSize: 20),
               children: [
                 TextSpan(
-                    text: title.split('-').toList()[1],
-                    style: const TextStyle(fontWeight: FontWeight.bold))
+                    text: title,
+                    style: const TextStyle(fontWeight: FontWeight.bold)
+                )
               ],
             ),
           ),

@@ -1,25 +1,34 @@
 import 'dart:convert';
-
+import 'dart:io';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_super_scaffold/flutter_super_scaffold.dart';
 import 'package:free_one_piece_manga/data/common_data.dart';
 import 'package:free_one_piece_manga/modules/common/c_data_controller.dart';
 import 'package:free_one_piece_manga/modules/common/m_downloaded_chapter_model.dart';
 import 'package:free_one_piece_manga/modules/manga/v_read_manga_page.dart';
+import 'package:free_one_piece_manga/modules/manga/w_download_dialog_widget.dart';
 import 'package:free_one_piece_manga/services/sp_service.dart';
 import 'package:free_one_piece_manga/services/vibrate_service.dart';
 import 'package:free_one_piece_manga/utils/custom_dialog.dart';
 import 'package:get/get.dart';
 import 'package:chaleno/chaleno.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../utils/app_functions.dart';
 
 class MangaListController extends GetxController {
   bool xLoading = false;
   List<String> allData = [];
   DataController dataController = Get.find();
+  ItemScrollController itemScrollController = ItemScrollController();
+  int totalCachedSize = 0;
 
   @override
   void onInit() {
-    fetchData();
+    initLoad();
     super.onInit();
   }
 
@@ -27,6 +36,11 @@ class MangaListController extends GetxController {
   void onClose() {
     // TODO: implement onClose
     super.onClose();
+  }
+
+  Future<void> initLoad() async{
+    await fetchData();
+    await updateDownloadSize();
   }
 
   Future<void> fetchData() async {
@@ -74,9 +88,18 @@ class MangaListController extends GetxController {
   }
 
   Future<void> onClickDownload({required String link}) async {
+    DownloadProgressController downloadProgressController = Get.find();
     vibrateNow();
     bool xSuccess = false;
-    MyDialog().showLoadingDialog();
+    Get.dialog(
+        Dialog(
+          backgroundColor: Colors.transparent,
+          child: DownloadDialogWidget(
+            text: 'Chapter ${AppFunctions.convertLinkToTitle(link: link)}',
+          ),
+        ),
+        barrierDismissible: false
+    );
     try {
       superPrint('start');
       List<String>? pages = await scrapThisChapter(link: link);
@@ -85,7 +108,7 @@ class MangaListController extends GetxController {
             ChapterModel(link: link, pages: pages);
         xSuccess = await downloadedChapterModel.cacheMe(
           onSuccessEach: (p0) {
-            superPrint(p0);
+            downloadProgressController.setProgress(p: p0);
           },
         );
         if (xSuccess) {
@@ -108,6 +131,7 @@ class MangaListController extends GetxController {
       null;
     }
     Get.back();
+    downloadProgressController.resetProgress();
     if (xSuccess) {
       MyDialog().showAlertDialog(message: 'Successfully Downloaded');
     } else {
@@ -118,6 +142,7 @@ class MangaListController extends GetxController {
   Future<List<String>?> scrapThisChapter({required String link}) async {
     List<String>? result;
     try {
+      superPrint(link,title: 'here');
       var parser = await Chaleno().load(link);
       if (parser != null) {
         final rawResult1 = parser.getElementsByTagName('img');
@@ -139,4 +164,27 @@ class MangaListController extends GetxController {
 
     return result;
   }
+
+  void onClickLastReadChapter() async{
+    String recentLink = dataController.recentChapterReadLink;
+    int index = allData.indexOf(recentLink);
+    superPrint(index);
+    itemScrollController.scrollTo(index: index, duration: const Duration(milliseconds: 860));
+    await Future.delayed(const Duration(seconds: 3));
+  }
+
+  Future<void> updateDownloadSize() async{
+    final cacheDir = await getTemporaryDirectory();
+    if (cacheDir.existsSync()) {
+      var cacheList = cacheDir.listSync(recursive: true);
+      for (var entity in cacheList) {
+        if (entity is File) {
+          totalCachedSize += await entity.length();
+        }
+      }
+    }
+    totalCachedSize = (totalCachedSize/1024/1024).round();
+    update();
+  }
+
 }

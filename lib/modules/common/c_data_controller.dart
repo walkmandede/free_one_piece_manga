@@ -10,7 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class DataController extends GetxController{
   String apiToken = '';
   List<ChapterModel> downloadedChapters = [];
-  String recentChapterReadLink = '';
+  String recentChapterReadLink = '-';
 
   Future<void> getAllData() async{
     await getDownloadChapters();

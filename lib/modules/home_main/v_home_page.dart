@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_super_scaffold/flutter_super_scaffold.dart';
 import 'package:free_one_piece_manga/modules/manga/v_manga_list_page.dart';
+import 'package:free_one_piece_manga/modules/manga/w_download_dialog_widget.dart';
+import 'package:free_one_piece_manga/modules/others/v_about_page.dart';
 import 'package:free_one_piece_manga/services/vibrate_service.dart';
 import 'package:free_one_piece_manga/utils/app_colors.dart';
 import 'package:free_one_piece_manga/utils/extensions.dart';
@@ -60,12 +62,10 @@ class _HomePageState extends State<HomePage> {
     return PageView(
       controller: pageController,
       physics: const NeverScrollableScrollPhysics(),
-      children: [
-        MangaListPage(),
-        MangaListPage(),
-        Center(
-          child: Text('Hee Hee'),
-        )
+      children: const [
+        MangaListPage(xDownload: false,),
+        MangaListPage(xDownload: true,),
+        AboutPage()
       ],
     );
   }
