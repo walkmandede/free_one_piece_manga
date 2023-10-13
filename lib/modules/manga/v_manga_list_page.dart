@@ -30,7 +30,12 @@ class _MangaListPageState extends State<MangaListPage> {
       isTopSafe: false,
       isBotSafe: true,
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.black,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            bottom: Radius.circular(20)
+          )
+        ),
         title: const Text('One Piece Manga Free',style: TextStyle(color: AppColors.white,fontWeight: FontWeight.w600),),
         actions: [
           if(kDebugMode)IconButton(onPressed: () async{

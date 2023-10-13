@@ -41,6 +41,8 @@ dependencies:
   flutter_super_scaffold:
   shared_preferences:
   flutter_cache_manager:
+  iconsax:
+#  material_symbols_icons:
 
   # google_maps_flutter_android: ^2.5.1
 

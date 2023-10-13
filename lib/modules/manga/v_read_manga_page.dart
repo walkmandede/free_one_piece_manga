@@ -22,8 +22,8 @@ class ReadMangaPage extends StatelessWidget {
     controller.setAsRecentRead(link: chapterModel.link);
     return FlutterSuperScaffold(
       topColor: AppColors.black,
-      statusBarBrightness: Brightness.dark,
-      statusIconBrightness: Brightness.light,
+      // statusBarBrightness: Brightness.dark,
+      // statusIconBrightness: Brightness.light,
       isTopSafe: true,
       botColor: AppColors.black,
       // appBar: AppBar(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_super_scaffold/flutter_super_scaffold.dart';
 import 'package:free_one_piece_manga/modules/home_main/v_home_page.dart';
+import 'package:free_one_piece_manga/modules/others/v_fuel_price.dart';
 import 'package:free_one_piece_manga/utils/app_colors.dart';
 import 'package:free_one_piece_manga/utils/localization/language.dart';
 import 'package:get/get.dart';
@@ -45,7 +46,7 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Nunito',
         fontFamilyFallback: const ["Book"],
       ),
-      home: const HomePage(),
+      home: HomePage(),
       // home: Container(),
     );
   }
