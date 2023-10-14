@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_super_scaffold/flutter_super_scaffold.dart';
 import 'package:free_one_piece_manga/modules/common/common_widgets.dart';
 import 'package:free_one_piece_manga/modules/common/m_downloaded_chapter_model.dart';
@@ -20,52 +21,64 @@ class ReadMangaPage extends StatelessWidget {
   Widget build(BuildContext context) {
     ReadMangaController controller = Get.find();
     controller.setAsRecentRead(link: chapterModel.link);
-    return GetBuilder<ReadMangaController>(
-      builder: (controller) {
-        return Scaffold(
-          appBar: controller.xFullScreen?null:AppBar(
-            backgroundColor: AppColors.black,
-            shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(
-                    bottom: Radius.circular(10)
-                )
-            ),
-            leading: GestureDetector(
-              onTap: () {
-                vibrateNow();
-                Get.back();
-              },
-              child: Container(
-                margin: const EdgeInsets.all(10),
-                padding: const EdgeInsets.all(8),
-                alignment: Alignment.center,
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
+    return RawKeyboardListener(
+      focusNode: FocusNode(),
+      onKey: (value) {
+        if(value is RawKeyDownEvent){
+          if (value.logicalKey == LogicalKeyboardKey.arrowRight) {
+            controller.onClickNextOrPrev(chapterModel: chapterModel, xNext: true);
+          } else if (value.logicalKey == LogicalKeyboardKey.arrowLeft) {
+            controller.onClickNextOrPrev(chapterModel: chapterModel, xNext: false);
+          }
+        }
+      },
+      child: GetBuilder<ReadMangaController>(
+        builder: (controller) {
+          return Scaffold(
+            appBar: controller.xFullScreen?null:AppBar(
+              backgroundColor: AppColors.black,
+              shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(
+                      bottom: Radius.circular(10)
+                  )
+              ),
+              leading: GestureDetector(
+                onTap: () {
+                  vibrateNow();
+                  Get.back();
+                },
+                child: Container(
+                  margin: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(8),
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const FittedBox(child: Icon(Icons.arrow_back_rounded)),
                 ),
-                child: const FittedBox(child: Icon(Icons.arrow_back_rounded)),
+              ),
+              centerTitle: true,
+              title: Text(
+               'Chapter ${AppFunctions.convertLinkToTitle(link: chapterModel.link)}',
+                style: const TextStyle(
+                  fontSize: 20,
+                  color: AppColors.white,
+                  fontWeight: FontWeight.w600
+                ),
               ),
             ),
-            centerTitle: true,
-            title: Text(
-             'Chapter ${AppFunctions.convertLinkToTitle(link: chapterModel.link)}',
-              style: const TextStyle(
-                fontSize: 20,
-                color: AppColors.white,
-                fontWeight: FontWeight.w600
-              ),
+            body: chapterModel.pages.isEmpty
+                ?const Center(child: Text('No data yet!'),)
+                :Column(
+              children: [
+                Expanded(child: pagesPanel()),
+                if(!controller.xFullScreen)controlPanel(),
+              ],
             ),
-          ),
-          body: chapterModel.pages.isEmpty
-              ?const Center(child: Text('No data yet!'),)
-              :Column(
-            children: [
-              Expanded(child: pagesPanel()),
-              if(!controller.xFullScreen)controlPanel(),
-            ],
-          ),
-        );
-      }
+          );
+        }
+      ),
     );
   }
 
@@ -120,39 +133,10 @@ class ReadMangaPage extends StatelessWidget {
 
   Widget fullScreenNextWidget(){
     ReadMangaController controller = Get.find();
-    bool xFirstPage = true;
-    bool xLastPage = false;
-    int currentPage = 1;
-    try {
-      currentPage = (controller.pageController.page?.ceil() ?? 0) + 1;
-
-      xFirstPage = controller.pageController.page == 0;
-      if (!xFirstPage) {
-        if (controller.pageController.page == chapterModel.pages.length - 1) {
-          xLastPage = true;
-        }
-      }
-    } catch (e) {
-      null;
-    }
-    MangaListController mangaListController = Get.find();
-    int? nextChapIndex = chapterModel.getIndex(links: mangaListController.allData);
 
     return ElevatedButton(
       onPressed: () {
-        if (xLastPage) {
-          Get.back();
-          controller.pageController.jumpToPage(0);
-          mangaListController.onClickEachLink(
-              link: mangaListController.allData[nextChapIndex! - 1]);
-        } else {
-          vibrateNow();
-          controller.pageController
-              .nextPage(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.linear)
-              .then((value) => controller.update());
-        }
+        controller.onClickNextOrPrev(chapterModel: chapterModel, xNext: true);
       },
       child: const Icon(Icons.arrow_forward_rounded),
     );
@@ -160,12 +144,12 @@ class ReadMangaPage extends StatelessWidget {
 
   Widget controlPanel() {
     ReadMangaController controller = Get.find();
+    int currentPage = 1;
+    currentPage = (controller.pageController.page?.ceil() ?? 0) + 1;
 
     bool xFirstPage = true;
     bool xLastPage = false;
-    int currentPage = 1;
     try {
-      currentPage = (controller.pageController.page?.ceil() ?? 0) + 1;
 
       xFirstPage = controller.pageController.page == 0;
       if (!xFirstPage) {
@@ -195,12 +179,7 @@ class ReadMangaPage extends StatelessWidget {
             replacement: 70.widthBox(),
             child: InkWell(
               onTap: () {
-                vibrateNow();
-                controller.pageController
-                    .previousPage(
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.linear)
-                    .then((value) => controller.update());
+                controller.onClickNextOrPrev(chapterModel: chapterModel, xNext: false);
               },
               child: Container(
                 padding:
@@ -260,11 +239,6 @@ class ReadMangaPage extends StatelessWidget {
                   // padding: const EdgeInsets.only(top: 20),
                   color: AppColors.white,
                 )
-                // Divider(
-                //   color: AppColors.white,
-                //   thickness: 0.5,
-                //   height: 1,
-                // )
               ],
             ),
           ),
@@ -273,19 +247,7 @@ class ReadMangaPage extends StatelessWidget {
                 !chapterModel.xLast(links: mangaListController.allData)),
             child: InkWell(
               onTap: () async {
-                if (xLastPage) {
-                  Get.back();
-                  controller.pageController.jumpToPage(0);
-                  mangaListController.onClickEachLink(
-                      link: mangaListController.allData[nextChapIndex! - 1]);
-                } else {
-                  vibrateNow();
-                  controller.pageController
-                      .nextPage(
-                          duration: const Duration(milliseconds: 250),
-                          curve: Curves.linear)
-                      .then((value) => controller.update());
-                }
+                controller.onClickNextOrPrev(chapterModel: chapterModel, xNext: true);
               },
               child: Container(
                 padding:
