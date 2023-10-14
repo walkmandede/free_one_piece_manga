@@ -11,6 +11,7 @@ class ReadMangaController extends GetxController{
   bool xLoading = true;
   PageController pageController = PageController();
   DataController dataController = Get.find();
+  bool xFullScreen = true;
 
   Future<void> initLoad() async{
 
@@ -21,6 +22,11 @@ class ReadMangaController extends GetxController{
     sharedPreferences.setString(SpService.recentChapterLinkKey, link);
     dataController.getAllData();
     superPrint('done');
+  }
+
+  void toggleFullScreenMode(){
+    xFullScreen = !xFullScreen;
+    update();
   }
 
 }

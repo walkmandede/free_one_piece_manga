@@ -20,86 +20,141 @@ class ReadMangaPage extends StatelessWidget {
   Widget build(BuildContext context) {
     ReadMangaController controller = Get.find();
     controller.setAsRecentRead(link: chapterModel.link);
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.black,
-        shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(
-                bottom: Radius.circular(10)
-            )
-        ),
-        leading: GestureDetector(
-          onTap: () {
-            vibrateNow();
-            Get.back();
-          },
-          child: Container(
-            margin: const EdgeInsets.all(10),
-            padding: const EdgeInsets.all(8),
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: AppColors.primary,
-              shape: BoxShape.circle,
+    return GetBuilder<ReadMangaController>(
+      builder: (controller) {
+        return Scaffold(
+          appBar: controller.xFullScreen?null:AppBar(
+            backgroundColor: AppColors.black,
+            shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(10)
+                )
             ),
-            child: const FittedBox(child: Icon(Icons.arrow_back_rounded)),
+            leading: GestureDetector(
+              onTap: () {
+                vibrateNow();
+                Get.back();
+              },
+              child: Container(
+                margin: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(8),
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: const FittedBox(child: Icon(Icons.arrow_back_rounded)),
+              ),
+            ),
+            centerTitle: true,
+            title: Text(
+             'Chapter ${AppFunctions.convertLinkToTitle(link: chapterModel.link)}',
+              style: const TextStyle(
+                fontSize: 20,
+                color: AppColors.white,
+                fontWeight: FontWeight.w600
+              ),
+            ),
           ),
-        ),
-        centerTitle: true,
-        title: Text(
-         'Chapter ${AppFunctions.convertLinkToTitle(link: chapterModel.link)}',
-          style: const TextStyle(
-            fontSize: 20,
-            color: AppColors.white,
-            fontWeight: FontWeight.w600
-          ),
-        ),
-      ),
-      body: GetBuilder<ReadMangaController>(
-        builder: (controller) {
-
-          if(chapterModel.pages.isEmpty){
-            return const Center(
-              child: Text('No data yet!'),
-            );
-          }
-
-          return Column(
+          body: chapterModel.pages.isEmpty
+              ?const Center(child: Text('No data yet!'),)
+              :Column(
             children: [
               Expanded(child: pagesPanel()),
-              controlPanel(),
+              if(!controller.xFullScreen)controlPanel(),
             ],
-          );
-        },
-      ),
+          ),
+        );
+      }
     );
   }
 
   Widget pagesPanel() {
     ReadMangaController controller = Get.find();
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-      child: PageView.builder(
-        controller: controller.pageController,
-        itemCount: chapterModel.pages.length,
-        pageSnapping: true,
-        allowImplicitScrolling: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemBuilder: (context, index) {
-          String src = chapterModel.pages[index];
-          return InteractiveViewer(
-            child: CachedNetworkImage(
-              imageUrl: src,
-              fit: BoxFit.contain,
-              placeholder: (context, url) {
-                return CommonWidgets.loadingWidget();
-              },
-              errorWidget: (context, url, error) {
-                return const Icon(Icons.error);
+    return GestureDetector(
+      onTap: () {
+        vibrateNow();
+        controller.toggleFullScreenMode();
+      },
+      child: Stack(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+            decoration: const BoxDecoration(
+              color: AppColors.white
+            ),
+            child: PageView.builder(
+              controller: controller.pageController,
+              itemCount: chapterModel.pages.length,
+              pageSnapping: true,
+              allowImplicitScrolling: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemBuilder: (context, index) {
+                String src = chapterModel.pages[index];
+                return InteractiveViewer(
+                  child: CachedNetworkImage(
+                    imageUrl: src,
+                    fit: BoxFit.contain,
+                    placeholder: (context, url) {
+                      return CommonWidgets.loadingWidget();
+                    },
+                    errorWidget: (context, url, error) {
+                      return const Icon(Icons.error);
+                    },
+                  ),
+                );
               },
             ),
-          );
-        },
+          ),
+          if(controller.xFullScreen)Align(
+            alignment: Alignment.bottomRight,
+            child: Container(
+              margin: EdgeInsets.all(AppConstants.basePadding*2),
+              child: fullScreenNextWidget(),
+            ),
+          )
+        ],
       ),
+    );
+  }
+
+  Widget fullScreenNextWidget(){
+    ReadMangaController controller = Get.find();
+    bool xFirstPage = true;
+    bool xLastPage = false;
+    int currentPage = 1;
+    try {
+      currentPage = (controller.pageController.page?.ceil() ?? 0) + 1;
+
+      xFirstPage = controller.pageController.page == 0;
+      if (!xFirstPage) {
+        if (controller.pageController.page == chapterModel.pages.length - 1) {
+          xLastPage = true;
+        }
+      }
+    } catch (e) {
+      null;
+    }
+    MangaListController mangaListController = Get.find();
+    int? nextChapIndex = chapterModel.getIndex(links: mangaListController.allData);
+
+    return ElevatedButton(
+      onPressed: () {
+        if (xLastPage) {
+          Get.back();
+          controller.pageController.jumpToPage(0);
+          mangaListController.onClickEachLink(
+              link: mangaListController.allData[nextChapIndex! - 1]);
+        } else {
+          vibrateNow();
+          controller.pageController
+              .nextPage(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.linear)
+              .then((value) => controller.update());
+        }
+      },
+      child: const Icon(Icons.arrow_forward_rounded),
     );
   }
 
@@ -122,8 +177,8 @@ class ReadMangaPage extends StatelessWidget {
       null;
     }
     MangaListController mangaListController = Get.find();
-    int? nextChapIndex =
-        chapterModel.getIndex(links: mangaListController.allData);
+    int? nextChapIndex = chapterModel.getIndex(links: mangaListController.allData);
+
     return Container(
       color: AppColors.black,
       padding: EdgeInsets.only(
@@ -220,12 +275,9 @@ class ReadMangaPage extends StatelessWidget {
               onTap: () async {
                 if (xLastPage) {
                   Get.back();
-                  // if (nextChapIndex != null) {
-
                   controller.pageController.jumpToPage(0);
                   mangaListController.onClickEachLink(
                       link: mangaListController.allData[nextChapIndex! - 1]);
-                  // }
                 } else {
                   vibrateNow();
                   controller.pageController
