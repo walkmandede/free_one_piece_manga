@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_super_scaffold/flutter_super_scaffold.dart';
 import 'package:free_one_piece_manga/utils/app_colors.dart';
@@ -14,11 +16,12 @@ class DownloadDialogWidget extends StatelessWidget {
     Get.put(DownloadProgressController());
     return GetBuilder<DownloadProgressController>(
       builder: (controller) {
+        double minSize = min(Get.width, Get.height);
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: Get.width * 0.7,
+              width: minSize * 0.7,
               alignment: Alignment.center,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -52,14 +55,14 @@ class DownloadDialogWidget extends StatelessWidget {
                             ),
                           ),
                           SimpleCircularProgressBar(
-                            size: Get.width*0.65,
+                            size: minSize*0.65,
                             valueNotifier: controller.valueNotifier,
                             progressStrokeWidth: 16,
                             backStrokeWidth: 1,
                             mergeMode: true,
                             onGetText: (p0) {
                               superPrint(p0);
-                              return Text(p0.round().toString());
+                              return Text('');
                             },
                             progressColors: const [AppColors.black],
                             backColor: Colors.transparent,
