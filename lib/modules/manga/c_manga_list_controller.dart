@@ -38,7 +38,7 @@ class MangaListController extends GetxController {
     super.onClose();
   }
 
-  Future<void> initLoad() async{
+  Future<void> initLoad() async {
     await fetchData();
     await updateDownloadSize();
   }
@@ -98,8 +98,7 @@ class MangaListController extends GetxController {
             text: 'Chapter ${AppFunctions.convertLinkToTitle(link: link)}',
           ),
         ),
-        barrierDismissible: false
-    );
+        barrierDismissible: false);
     try {
       superPrint('start');
       List<String>? pages = await scrapThisChapter(link: link);
@@ -142,7 +141,7 @@ class MangaListController extends GetxController {
   Future<List<String>?> scrapThisChapter({required String link}) async {
     List<String>? result;
     try {
-      superPrint(link,title: 'here');
+      superPrint(link, title: 'here');
       var parser = await Chaleno().load(link);
       if (parser != null) {
         final rawResult1 = parser.getElementsByTagName('img');
@@ -165,15 +164,17 @@ class MangaListController extends GetxController {
     return result;
   }
 
-  void onClickLastReadChapter() async{
+  void onClickLastReadChapter() async {
     String recentLink = dataController.recentChapterReadLink;
     int index = allData.indexOf(recentLink);
     superPrint(index);
-    itemScrollController.scrollTo(index: index, duration: const Duration(milliseconds: 860));
+    itemScrollController.scrollTo(
+        index: index <= 5 ? index : (index - 5),
+        duration: const Duration(milliseconds: 860));
     await Future.delayed(const Duration(seconds: 3));
   }
 
-  Future<void> updateDownloadSize() async{
+  Future<void> updateDownloadSize() async {
     final cacheDir = await getTemporaryDirectory();
     if (cacheDir.existsSync()) {
       var cacheList = cacheDir.listSync(recursive: true);
@@ -183,8 +184,7 @@ class MangaListController extends GetxController {
         }
       }
     }
-    totalCachedSize = (totalCachedSize/1024/1024).round();
+    totalCachedSize = (totalCachedSize / 1024 / 1024).round();
     update();
   }
-
 }
